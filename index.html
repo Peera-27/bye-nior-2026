@@ -167,6 +167,11 @@
             href="#theme"
             >ธีมการแต่งกาย</a
           >
+          <a
+            class="text-sm font-semibold hover:text-primary transition-all duration-300 hover:scale-110"
+            href="#rsvp"
+            >ยืนยันการเข้าร่วม</a
+          >
         </div>
       </div>
     </nav>
@@ -531,6 +536,103 @@
           </div>
         </div>
       </section>
+
+      <section id="rsvp" class="py-20 px-6 max-w-3xl mx-auto relative z-10">
+        <div
+          data-aos="zoom-in-up"
+          data-aos-duration="1000"
+          class="glass-card p-8 md:p-12 rounded-xl border-primary/30 glow-purple hover:shadow-[0_0_40px_rgba(140,43,238,0.3)] transition-shadow duration-500"
+        >
+          <div class="text-center mb-8">
+            <h3 class="text-3xl font-800 mb-2 text-white">
+              ยืนยันการเข้าร่วมงาน
+            </h3>
+            <p class="text-slate-400">
+              กรุณากรอกชื่อและเลือกสถานะเพื่อการจัดเตรียมสถานที่
+            </p>
+            <p
+              class="text-accent-gold text-xl font-bold mt-2 mb-4 animate-pulse"
+            >
+              ราคา 250 บาทต่อ 1 ท่าน
+            </p>
+          </div>
+
+          <form id="rsvp-form" class="space-y-6">
+            <div>
+              <label class="block text-sm font-medium mb-2 text-primary"
+                >ชื่อ-นามสกุล</label
+              >
+              <input
+                type="text"
+                name="fullname"
+                required
+                class="w-full bg-surface-dark border border-primary/20 rounded-lg px-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-300 text-white hover:border-primary/50"
+                placeholder="ระบุชื่อของท่าน"
+              />
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <label
+                class="relative cursor-pointer hover:scale-[1.03] transition-transform duration-300"
+              >
+                <input
+                  type="radio"
+                  name="status"
+                  value="Approve"
+                  class="peer sr-only"
+                  checked
+                />
+                <div
+                  class="text-center p-4 rounded-lg border border-primary/20 peer-checked:bg-primary/20 peer-checked:border-primary transition-all shadow-sm hover:shadow-[0_0_15px_rgba(140,43,238,0.2)]"
+                >
+                  <span
+                    class="material-symbols-outlined block mb-1 text-accent-blue peer-checked:scale-110 transition-transform"
+                    >check_circle</span
+                  >
+                  <span class="text-sm font-bold text-white">ไปร่วมงาน</span>
+                </div>
+              </label>
+
+              <label
+                class="relative cursor-pointer hover:scale-[1.03] transition-transform duration-300"
+              >
+                <input
+                  type="radio"
+                  name="status"
+                  value="Decline"
+                  class="peer sr-only"
+                />
+                <div
+                  class="text-center p-4 rounded-lg border border-primary/20 peer-checked:bg-red-500/20 peer-checked:border-red-500 transition-all shadow-sm hover:shadow-[0_0_15px_rgba(239,68,68,0.2)]"
+                >
+                  <span
+                    class="material-symbols-outlined block mb-1 text-slate-400 peer-checked:text-red-400 peer-checked:scale-110 transition-transform"
+                    >cancel</span
+                  >
+                  <span class="text-sm font-bold text-white">ไม่สะดวก</span>
+                </div>
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              id="submit-btn"
+              class="w-full bg-primary hover:bg-primary/80 text-white font-bold py-4 rounded-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-95 flex justify-center items-center gap-2 hover:shadow-[0_0_20px_rgba(140,43,238,0.6)]"
+            >
+              <span id="btn-text">ยืนยันข้อมูล</span>
+              <span
+                id="btn-loader"
+                class="hidden animate-spin material-symbols-outlined"
+                >sync</span
+              >
+            </button>
+            <p
+              id="form-message"
+              class="text-center text-sm hidden transition-opacity duration-300"
+            ></p>
+          </form>
+        </div>
+      </section>
     </main>
 
     <footer
@@ -546,9 +648,46 @@
 
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
+      // ตั้งค่า AOS Animation
       AOS.init({
         once: true, // แอนิเมชันเล่นแค่ครั้งเดียวตอน Scroll ลงมา
         offset: 50, // ระยะก่อนที่จะแสดงแอนิเมชัน
+      });
+
+      // สคริปต์ส่งข้อมูลไปยัง Google Sheets
+      const scriptURL =
+        "https://script.google.com/macros/s/AKfycbzkbu_v_dcfuY0U6r98-u-DFiJ-yLtrRQ6HeK9EfP6dUhTnKUG1tuhcw3R6bs-GBKTm/exec";
+      const form = document.getElementById("rsvp-form");
+      const btn = document.getElementById("submit-btn");
+      const btnText = document.getElementById("btn-text");
+      const btnLoader = document.getElementById("btn-loader");
+      const msg = document.getElementById("form-message");
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        btn.disabled = true;
+        btnText.innerText = "กำลังบันทึก...";
+        btnLoader.classList.remove("hidden");
+
+        fetch(scriptURL, { method: "POST", body: new FormData(form) })
+          .then((response) => {
+            msg.innerText = "ส่งข้อมูลสำเร็จ! ขอบคุณที่ตอบรับครับ";
+            msg.classList.remove("hidden", "text-red-500");
+            msg.classList.add("text-accent-blue");
+            form.reset();
+          })
+          .catch((error) => {
+            msg.innerText = "เกิดข้อผิดพลาด กรุณาลองใหม่";
+            msg.classList.remove("hidden", "text-accent-blue");
+            msg.classList.add("text-red-500");
+            console.error("Error!", error.message);
+          })
+          .finally(() => {
+            btn.disabled = false;
+            btnText.innerText = "ยืนยันข้อมูล";
+            btnLoader.classList.add("hidden");
+          });
       });
     </script>
   </body>
